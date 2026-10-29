@@ -48,7 +48,7 @@ jobs:
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # tag=v4.2.0
 
       - name: Log in to ghcr.io
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # tag=v4.6.0
         with:
           registry: ${{ env.REGISTRY }}
@@ -83,9 +83,10 @@ jobs:
           file: ./Dockerfile
           target: ${{ matrix.component }}
           platforms: linux/amd64,linux/arm64
-          # Pushed only from release tags; every other trigger is a build-only
-          # smoke test that the image still compiles on both architectures.
-          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          # Pushed from main (tagged `main` and with the commit SHA) and from
+          # release tags. Pull requests only check that the image still
+          # builds on both architectures.
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
