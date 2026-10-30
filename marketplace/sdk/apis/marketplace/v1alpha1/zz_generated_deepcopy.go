@@ -52,6 +52,44 @@ func (in *OfferingClaim) DeepCopy() *OfferingClaim {
 }
 
 // DeepCopyInto is a deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *OfferingResource) DeepCopyInto(out *OfferingResource) {
+	*out = *in
+	if in.Versions != nil {
+		in, out := &in.Versions, &out.Versions
+		*out = make([]OfferingResourceVersion, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+}
+
+// DeepCopy is a deepcopy function, copying the receiver, creating a new OfferingResource.
+func (in *OfferingResource) DeepCopy() *OfferingResource {
+	if in == nil {
+		return nil
+	}
+	out := new(OfferingResource)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is a deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *OfferingResourceVersion) DeepCopyInto(out *OfferingResourceVersion) {
+	*out = *in
+	in.Schema.DeepCopyInto(&out.Schema)
+}
+
+// DeepCopy is a deepcopy function, copying the receiver, creating a new OfferingResourceVersion.
+func (in *OfferingResourceVersion) DeepCopy() *OfferingResourceVersion {
+	if in == nil {
+		return nil
+	}
+	out := new(OfferingResourceVersion)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is a deepcopy function, copying the receiver, writing into out. in must be non-nil.
 func (in *Producer) DeepCopyInto(out *Producer) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
@@ -127,6 +165,13 @@ func (in *CatalogOffering) DeepCopyInto(out *CatalogOffering) {
 		*out = make(map[string]string, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
+		}
+	}
+	if in.Resources != nil {
+		in, out := &in.Resources, &out.Resources
+		*out = make([]OfferingResource, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 }

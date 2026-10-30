@@ -5,9 +5,10 @@ platform built out of two of them.
 
 **kcp Platform** is [tenancy/](tenancy/) and [marketplace/](marketplace/)
 together — tenants, projects and memberships, plus a catalog of offerings
-to enable in them — served under the `*.platform.kcp.io` API groups, with
-[ui/](ui/) as its console. The other three components are standalone
-virtual workspaces that stand on their own.
+to enable in them — served under the `*.platform.kcp.io` API groups. Its
+web console lives in [kcp hub](https://github.com/olamilekan000/kcp-hub),
+which runs these components as one platform. The other three components
+are standalone virtual workspaces that stand on their own.
 
 | Component | What it serves | Image |
 |---|---|---|
@@ -67,19 +68,6 @@ nothing after it has to be told where kcp is.
 
 The standalone binaries (`tenancyctl`, `scar-to-kubeconfig`) remain the
 same code under their own names.
-
-## One UI
-
-[ui/](ui/) is a web console over exactly the same surfaces: sign in with
-the same identity provider, see your tenants and projects, browse the
-catalog and enable from it, and look at what a workspace serves. It is
-static files talking to the front-proxy with the user's own token — no
-backend of ours, nothing privileged, and so it can never show more than
-kcp would answer for that person.
-
-`make tilt-up` starts it with the rest of the stack, on
-http://localhost:5173; `cd ui && npm install && npm run dev` runs it
-against a stack that is already up.
 
 ## Building a producer
 

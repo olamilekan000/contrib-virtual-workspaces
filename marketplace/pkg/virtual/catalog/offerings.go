@@ -100,5 +100,6 @@ func toCatalogOffering(entry directory.Entry) *marketplacev1alpha1.CatalogOfferi
 		Ready:         entry.Detail.Ready,
 		DocsURL:       entry.Detail.DocsURL,
 		Instructions:  entry.Instructions,
+		Resources:     entry.Resources,
 	}
 }

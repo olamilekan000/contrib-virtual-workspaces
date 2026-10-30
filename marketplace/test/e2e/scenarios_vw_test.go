@@ -203,6 +203,7 @@ func acceptedPublishClaims() []apisv1alpha2.AcceptablePermissionClaim {
 	return []apisv1alpha2.AcceptablePermissionClaim{
 		accept("apis.kcp.io", "apiexports", "get", "list", "watch"),
 		accept("apis.kcp.io", "apiexportendpointslices", "get", "list", "watch"),
+		accept("apis.kcp.io", "apiresourceschemas", "get", "list", "watch"),
 		accept("core.kcp.io", "logicalclusters", "get", "list", "watch"),
 		accept("rbac.authorization.k8s.io", "clusterroles", "get", "list", "watch", "create", "update", "delete"),
 		accept("rbac.authorization.k8s.io", "clusterrolebindings", "get", "list", "watch", "create", "update", "delete"),

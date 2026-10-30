@@ -64,6 +64,25 @@ type Offering struct {
 	// content is mirrored separately and joined at read time, so an edit
 	// to the instructions never has to re-reconcile the export.
 	InstructionsRef string
+	// Resources are the export's spec.resources. Like instructions, the
+	// schemas they name are mirrored separately and joined at read time.
+	Resources []ResourceRef
+}
+
+// ResourceRef is one resource an export serves and the APIResourceSchema,
+// in the export's own cluster, that defines it.
+type ResourceRef struct {
+	Group    string
+	Resource string
+	Schema   string
+}
+
+// Schema is the directory's view of an APIResourceSchema: what the catalog
+// shows of it.
+type Schema struct {
+	Kind     string
+	Scope    string
+	Versions []marketplacev1alpha1.OfferingResourceVersion
 }
 
 // Directory is safe for concurrent use.
@@ -75,6 +94,8 @@ type Directory struct {
 	// instructions holds the content of ConfigMaps offerings point at,
 	// keyed like everything else by the cluster they live in.
 	instructions map[Key]map[string]string
+	// schemas holds the APIResourceSchemas offerings reference.
+	schemas map[Key]Schema
 }
 
 // New returns an empty directory.
@@ -83,6 +104,7 @@ func New() *Directory {
 		producers:    map[Key]Producer{},
 		offerings:    map[Key]Offering{},
 		instructions: map[Key]map[string]string{},
+		schemas:      map[Key]Schema{},
 	}
 }
 
@@ -149,6 +171,20 @@ func (d *Directory) RemoveInstructions(key Key) {
 	delete(d.instructions, key)
 }
 
+// UpsertSchema records one APIResourceSchema. As with instructions, which
+// offerings use it is decided at read time by name.
+func (d *Directory) UpsertSchema(key Key, s Schema) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.schemas[key] = s
+}
+
+func (d *Directory) RemoveSchema(key Key) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	delete(d.schemas, key)
+}
+
 // ForgetCluster drops everything mirrored from one logical cluster — a
 // workspace that unbound its export leaves nothing behind.
 func (d *Directory) ForgetCluster(cluster string) {
@@ -169,6 +205,11 @@ func (d *Directory) ForgetCluster(cluster string) {
 			delete(d.instructions, key)
 		}
 	}
+	for key := range d.schemas {
+		if key.Cluster == cluster {
+			delete(d.schemas, key)
+		}
+	}
 }
 
 // Entry is one catalog listing: a published export joined with the
@@ -184,6 +225,9 @@ type Entry struct {
 	// Instructions is the referenced ConfigMap's content, or nil if the
 	// offering names none or it has not been seen.
 	Instructions map[string]string
+	// Resources are the offering's resources joined with their schemas;
+	// one whose schema has not been seen carries no versions.
+	Resources []marketplacev1alpha1.OfferingResource
 }
 
 // Name is the entry's stable listing name, "<producer>.<export>".
@@ -231,6 +275,14 @@ func (d *Directory) Catalog() []Entry {
 		// Instructions live next to the export, in the same cluster.
 		if offering.InstructionsRef != "" {
 			entry.Instructions = d.instructions[Key{Cluster: key.Cluster, Name: offering.InstructionsRef}]
+		}
+		// So do the schemas.
+		for _, ref := range offering.Resources {
+			r := marketplacev1alpha1.OfferingResource{Group: ref.Group, Resource: ref.Resource, Schema: ref.Schema}
+			if s, seen := d.schemas[Key{Cluster: key.Cluster, Name: ref.Schema}]; seen {
+				r.Kind, r.Scope, r.Versions = s.Kind, s.Scope, s.Versions
+			}
+			entry.Resources = append(entry.Resources, r)
 		}
 		out = append(out, entry)
 	}

@@ -67,23 +67,6 @@ data:
       https: 0.0.0.0:5556
       tlsCert: /etc/dex/tls/tls.crt
       tlsKey: /etc/dex/tls/tls.key
-      # The browser fetches discovery and exchanges the code from the UI's
-      # own origin, which is a different one than dex — so dex has to say
-      # those origins may read its answers. Without this the sign-in fails
-      # at the first request, before anything reaches kcp.
-      #
-      # A few ports, because vite moves up one when the last is taken.
-      allowedOrigins:
-        - http://localhost:5173
-        - http://localhost:5174
-        - http://localhost:5175
-      # The token exchange itself needs none of these — form-encoded POSTs
-      # are CORS-safelisted and never preflight — but anything that adds a
-      # header later would be refused with a bare 403 at the preflight,
-      # which is a confusing way to find out.
-      allowedHeaders:
-        - Content-Type
-        - Authorization
     oauth2:
       # The password grant needs a nominated connector and a public
       # client; PKCE (contribctl tenancy login without --username) works
@@ -94,14 +77,11 @@ data:
       - id: kcp
         public: true
         name: kcp
-        # The CLI's loopback listener, and the UI's dev server. Both are
-        # public clients doing authorization-code + PKCE: neither has a
-        # secret to keep, which is what PKCE is for.
+        # The CLI's loopback listener: a public client doing
+        # authorization-code + PKCE, with no secret to keep, which is what
+        # PKCE is for.
         redirectURIs:
           - 'http://localhost:8000/callback'
-          - 'http://localhost:5173/callback'
-          - 'http://localhost:5174/callback'
-          - 'http://localhost:5175/callback'
     enablePasswordDB: true
     # All hashes are bcrypt("password").
     staticPasswords:

@@ -168,6 +168,7 @@ func Run(ctx context.Context, opts Options, dir *directory.Directory) error {
 				IdentityHash:    card.IdentityHash,
 				DocsURL:         card.DocsURL,
 				InstructionsRef: card.InstructionsRef,
+				Resources:       resourceRefs(&export),
 				// Ready means a consumer can act on this entry: kcp has
 				// given the export its identity. Whether a Provider record
 				// names this workspace is the other half, and the
@@ -201,6 +202,28 @@ func Run(ctx context.Context, opts Options, dir *directory.Directory) error {
 			return ctrl.Result{}, nil
 		})); err != nil {
 		return fmt.Errorf("build instructions mirror: %w", err)
+	}
+
+	// Schemas: the APIResourceSchemas exports reference, mirrored the same
+	// way and for the same reason — joined by name at read time, so the
+	// catalog shows what enabling an offering adds before anyone does.
+	if err := mcbuilder.ControllerManagedBy(publish).
+		Named("marketplace-vw-schemas").
+		For(&apisv1alpha1.APIResourceSchema{}).
+		Complete(mcreconcile.Func(func(ctx context.Context, req mcreconcile.Request) (ctrl.Result, error) {
+			key := directory.Key{Cluster: string(req.ClusterName), Name: req.Name}
+			var s apisv1alpha1.APIResourceSchema
+			if err := getFrom(ctx, publish, req, &s); err != nil {
+				if apierrors.IsNotFound(err) {
+					dir.RemoveSchema(key)
+					return ctrl.Result{}, nil
+				}
+				return ctrl.Result{}, err
+			}
+			dir.UpsertSchema(key, schemaOf(&s))
+			return ctrl.Result{}, nil
+		})); err != nil {
+		return fmt.Errorf("build schema mirror: %w", err)
 	}
 
 	if err := catalog.GetLocalManager().Add(manager.RunnableFunc(func(ctx context.Context) error {
@@ -244,6 +267,27 @@ func (c clusterLifecycle) OnDelete(obj client.Object) {
 	}
 	c.logger.Info("workspace left the fleet, dropping from directory", "cluster", cluster)
 	c.dir.ForgetCluster(cluster)
+}
+
+func resourceRefs(export *apisv1alpha2.APIExport) []directory.ResourceRef {
+	var refs []directory.ResourceRef
+	for _, r := range export.Spec.Resources {
+		refs = append(refs, directory.ResourceRef{Group: r.Group, Resource: r.Name, Schema: r.Schema})
+	}
+	return refs
+}
+
+func schemaOf(s *apisv1alpha1.APIResourceSchema) directory.Schema {
+	out := directory.Schema{Kind: s.Spec.Names.Kind, Scope: string(s.Spec.Scope)}
+	for _, v := range s.Spec.Versions {
+		out.Versions = append(out.Versions, marketplacev1alpha1.OfferingResourceVersion{
+			Name:    v.Name,
+			Served:  v.Served,
+			Storage: v.Storage,
+			Schema:  *v.Schema.DeepCopy(),
+		})
+	}
+	return out
 }
 
 func getFrom(ctx context.Context, mgr mcmanager.Manager, req mcreconcile.Request, obj client.Object) error {

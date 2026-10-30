@@ -25,7 +25,7 @@
 #
 #   - a browser will not talk to a self-signed issuer until someone has
 #     visited it once and accepted the warning, and that acceptance is per
-#     certificate — so a new one silently breaks signing in to the console;
+#     certificate — so a new one silently breaks signing in from a browser;
 #   - dex reads its certificate once at boot, so a new one means every OIDC
 #     validator has to be rolled with it or they answer 401 to everything.
 #

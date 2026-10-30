@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // Phase describes where a marketplace object is in its lifecycle. It is a
@@ -251,6 +252,43 @@ type CatalogOffering struct {
 	// AnnotationInstructions.
 	// +optional
 	Instructions map[string]string `json:"instructions,omitempty"`
+	// Resources is the API enabling adds: each resource the export serves,
+	// with the schema its APIResourceSchema declares, so a consumer can
+	// read what they would get before enabling it. A resource whose schema
+	// has not been seen is listed without versions.
+	// +optional
+	Resources []OfferingResource `json:"resources,omitempty"`
+}
+
+// OfferingResource is one resource an offering serves, projected from the
+// APIResourceSchema the export references.
+type OfferingResource struct {
+	// Group and Resource name it as the export does.
+	// +optional
+	Group    string `json:"group,omitempty"`
+	Resource string `json:"resource"`
+	// Schema is the APIResourceSchema's name in the producer's workspace.
+	// +optional
+	Schema string `json:"schema,omitempty"`
+	// Kind and Scope are the schema's.
+	// +optional
+	Kind string `json:"kind,omitempty"`
+	// +optional
+	Scope string `json:"scope,omitempty"`
+	// Versions are the schema's versions, in its order.
+	// +optional
+	Versions []OfferingResourceVersion `json:"versions,omitempty"`
+}
+
+// OfferingResourceVersion is one version of an offered resource.
+type OfferingResourceVersion struct {
+	Name    string `json:"name"`
+	Served  bool   `json:"served"`
+	Storage bool   `json:"storage"`
+	// Schema is the version's OpenAPI v3 schema, verbatim.
+	// +optional
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Schema runtime.RawExtension `json:"schema,omitempty"`
 }
 
 // CatalogOfferingList is the list form of CatalogOffering.

@@ -61,8 +61,7 @@ the `oidc` block (`issuerURL`,
 `clientID: kcp`, `usernameClaim: email`, `caFileRef: dex-tls/ca.crt`) and
 `dex.kcp.localhost` among the pods' hostAliases. That is what puts an OIDC
 authenticator on the shards and the front-proxy; without it every dex token
-is `invalid bearer token` at `:8443` and the console reports that the
-servers did not accept the sign-in. If kcp's entry point grows an `oidc`
+is `invalid bearer token` at `:8443`. If kcp's entry point grows an `oidc`
 parameter, this collapses back to an include.
 
 ### The dex certificate, and why it matters
@@ -72,8 +71,8 @@ directions that are easy to mistake for component failures:
 
 - a browser will not talk to a self-signed issuer until someone has visited
   it once and accepted the warning, and that acceptance is **per
-  certificate** — so a new one makes the console's Sign in button fail with
-  nothing but `Failed to fetch` in the console;
+  certificate** — so a new one makes signing in from a browser fail until
+  the issuer has been visited and accepted again;
 - dex reads its certificate once, at **boot**, so a new one in the secret
   leaves dex serving the old one while every OIDC validator has mounted the
   new CA. They then cannot fetch dex's discovery document at all, their
@@ -85,9 +84,6 @@ the source of truth and `.tilt/dex` as a cache of it, so wiping `.tilt` no
 longer changes the certificate — only losing the cluster does. And the
 certificate's fingerprint is an annotation on the dex pod template, so a
 certificate that really is new rolls dex with it.
-
-If the console's Sign in does fail, it now says so in those terms and links
-the issuer to accept once, rather than printing the URL as decoration.
 
 Knobs, all optional:
 
@@ -219,8 +215,7 @@ a token names the same user everywhere. Four users, all with the password
 `admin` is the platform administrator: the tenancy and marketplace init
 steps run with `--platform-admin-user=admin@platform.example.com`, which
 binds it to a role that may manage Tenants in `root:tenancy:store` and
-Producers in `root:marketplace:catalog`, and nothing else. It is the only
-user the console shows the Admin page to.
+Producers in `root:marketplace:catalog`, and nothing else.
 
 The identity is the **plain email, with no groups**: the kcp-operator only
 speaks the legacy `--oidc-*` claim mapping, so the CEL claim mapping used

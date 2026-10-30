@@ -7,6 +7,8 @@
 #   - read apiexports, because an annotated export IS an offering: this is
 #     how one is noticed, read, and noticed again when un-annotated;
 #   - read their endpoint slices, to follow the exports that are published;
+#   - read apiresourceschemas, so the catalog can show what an offering
+#     serves - the schema a consumer gets by enabling it - before they do;
 #   - read the LogicalCluster, so the workspace's canonical path can be
 #     matched against the Producer record that names it (that match is how
 #     an external producer's workspace is recognized);
@@ -31,6 +33,9 @@ spec:
       verbs: [get, list, watch]
     - group: apis.kcp.io
       resource: apiexportendpointslices
+      verbs: [get, list, watch]
+    - group: apis.kcp.io
+      resource: apiresourceschemas
       verbs: [get, list, watch]
     - group: core.kcp.io
       resource: logicalclusters

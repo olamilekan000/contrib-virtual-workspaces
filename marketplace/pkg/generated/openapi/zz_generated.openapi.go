@@ -19,13 +19,15 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.CatalogOffering":     schema_sdk_apis_marketplace_v1alpha1_CatalogOffering(ref),
-		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.CatalogOfferingList": schema_sdk_apis_marketplace_v1alpha1_CatalogOfferingList(ref),
-		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.OfferingClaim":       schema_sdk_apis_marketplace_v1alpha1_OfferingClaim(ref),
-		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.Producer":            schema_sdk_apis_marketplace_v1alpha1_Producer(ref),
-		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.ProducerList":        schema_sdk_apis_marketplace_v1alpha1_ProducerList(ref),
-		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.ProducerSpec":        schema_sdk_apis_marketplace_v1alpha1_ProducerSpec(ref),
-		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.ProducerStatus":      schema_sdk_apis_marketplace_v1alpha1_ProducerStatus(ref),
+		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.CatalogOffering":         schema_sdk_apis_marketplace_v1alpha1_CatalogOffering(ref),
+		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.CatalogOfferingList":     schema_sdk_apis_marketplace_v1alpha1_CatalogOfferingList(ref),
+		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.OfferingClaim":           schema_sdk_apis_marketplace_v1alpha1_OfferingClaim(ref),
+		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.OfferingResource":        schema_sdk_apis_marketplace_v1alpha1_OfferingResource(ref),
+		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.OfferingResourceVersion": schema_sdk_apis_marketplace_v1alpha1_OfferingResourceVersion(ref),
+		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.Producer":                schema_sdk_apis_marketplace_v1alpha1_Producer(ref),
+		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.ProducerList":            schema_sdk_apis_marketplace_v1alpha1_ProducerList(ref),
+		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.ProducerSpec":            schema_sdk_apis_marketplace_v1alpha1_ProducerSpec(ref),
+		"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.ProducerStatus":          schema_sdk_apis_marketplace_v1alpha1_ProducerStatus(ref),
 		v1.APIGroup{}.OpenAPIModelName():                  schema_pkg_apis_meta_v1_APIGroup(ref),
 		v1.APIGroupList{}.OpenAPIModelName():              schema_pkg_apis_meta_v1_APIGroupList(ref),
 		v1.APIResource{}.OpenAPIModelName():               schema_pkg_apis_meta_v1_APIResource(ref),
@@ -202,12 +204,25 @@ func schema_sdk_apis_marketplace_v1alpha1_CatalogOffering(ref common.ReferenceCa
 							},
 						},
 					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources is the API enabling adds: each resource the export serves, with the schema its APIResourceSchema declares, so a consumer can read what they would get before enabling it. A resource whose schema has not been seen is listed without versions.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.OfferingResource"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"producer", "offering", "ready"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.OfferingClaim", v1.ObjectMeta{}.OpenAPIModelName()},
+			"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.OfferingClaim", "github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.OfferingResource", v1.ObjectMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -320,6 +335,112 @@ func schema_sdk_apis_marketplace_v1alpha1_OfferingClaim(ref common.ReferenceCall
 				Required: []string{"resource", "verbs"},
 			},
 		},
+	}
+}
+
+func schema_sdk_apis_marketplace_v1alpha1_OfferingResource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "OfferingResource is one resource an offering serves, projected from the APIResourceSchema the export references.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Group and Resource name it as the export does.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"schema": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Schema is the APIResourceSchema's name in the producer's workspace.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind and Scope are the schema's.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"scope": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"versions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Versions are the schema's versions, in its order.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.OfferingResourceVersion"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"resource"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/kcp-dev/contrib-virtual-workspaces/marketplace/sdk/apis/marketplace/v1alpha1.OfferingResourceVersion"},
+	}
+}
+
+func schema_sdk_apis_marketplace_v1alpha1_OfferingResourceVersion(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "OfferingResourceVersion is one version of an offered resource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"served": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"storage": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"schema": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Schema is the version's OpenAPI v3 schema, verbatim.",
+							Ref:         ref(runtime.RawExtension{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"name", "served", "storage"},
+			},
+		},
+		Dependencies: []string{
+			runtime.RawExtension{}.OpenAPIModelName()},
 	}
 }
 

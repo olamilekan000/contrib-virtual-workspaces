@@ -43,7 +43,7 @@ if os.getenv('KCP_PORTAL_ENABLED') == None and not os.path.exists(KCP_DIR + '/..
     os.putenv('KCP_PORTAL_ENABLED', 'false')
 
 # Dex: an in-cluster OIDC issuer shared by kcp and the virtual workspaces,
-# so the console and `contribctl login` work against this environment. One
+# so `contribctl login` works against this environment. One
 # issuer URL serves both sides: the host reaches it through the :8443
 # ingress port-forward, the kcp pods through their gateway hostAliases.
 # Disable with DEX_ENABLED=false.
@@ -147,8 +147,8 @@ if KCP_STATIC:
         print('kcp portal → http://localhost:8080 (no-oidc, static image %s)' % portal_image)
 else:
     # Built from source: kcp's hand-written CRs, which carry no OIDC block.
-    # Rather than let the stack come up with a console nobody can sign in
-    # to, say so.
+    # Rather than let the stack come up with an issuer nobody can sign in
+    # with, say so.
     if DEX_ENABLED:
         fail('KCP_STATIC=false runs kcp from the hand-written CRs in the checkout, which have no OIDC issuer; ' +
              'run with DEX_ENABLED=false, or use the default KCP_STATIC=true.')
@@ -596,8 +596,7 @@ if enabled('MCP'):
     print('  publish it to the catalog: tilt trigger mcp-offering')
 
 # The dex user who runs the platform: init binds it to the platform-admin
-# role in the tenancy store and the marketplace catalog, which is what
-# makes the console's Admin page appear for it.
+# role in the tenancy store and the marketplace catalog, and nothing else.
 PLATFORM_ADMIN = 'admin@platform.example.com'
 PLATFORM_ADMIN_INIT_ARGS = '        - --platform-admin-user=%s\n' % PLATFORM_ADMIN
 
@@ -664,38 +663,6 @@ if enabled('MARKETPLACE'):
     )
     print('marketplace VW → %s/services/marketplace' % FRONT_PROXY_URL)
     print('  example offerings: tilt trigger marketplace-examples')
-
-# The web UI, served by vite in dev mode. It talks only to the
-# front-proxy — the dev server proxies /services and /clusters there — so
-# the browser stays on one origin and kcp needs no CORS configuration.
-# UI_ENABLED=false skips it.
-if enabled('UI'):
-    # Dependencies are a resource of their own so the dev server is not
-    # restarted by an install, and an install re-runs only when the
-    # manifests change. `npm ci` when there is a lockfile, because a dev
-    # environment that drifts from it is a class of bug nobody enjoys.
-    local_resource('ui-deps',
-        cmd='cd ui && if [ -f package-lock.json ]; then npm ci --silent; else npm install --silent; fi',
-        deps=['ui/package.json', 'ui/package-lock.json'],
-        labels=['ui'],
-        allow_parallel=True,
-    )
-
-    # Vite watches the sources itself, so Tilt starts it and stays out of
-    # the way: no deps here, or every keystroke would restart the server.
-    local_resource('ui',
-        serve_cmd='npm run dev --silent',
-        serve_dir='ui',
-        resource_deps=['ui-deps'] + (['dex'] if DEX_ENABLED else []),
-        labels=['ui'],
-        links=['http://localhost:5173'],
-        readiness_probe=probe(
-            period_secs=5,
-            http_get=http_get_action(port=5173, path='/'),
-        ),
-        allow_parallel=True,
-    )
-    print('UI → http://localhost:5173 (sign in with the dex users above)')
 
 # One patch carries every mapping: the front-proxy matches the longest
 # prefix, so these win over the default /services/ route to the shards.
